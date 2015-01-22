@@ -9,14 +9,14 @@
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 
-#include "e_af_alg.h"
+#include "e_apm.h"
 #include "digests.h"
 
-int af_alg_DIGEST_init(EVP_MD_CTX *ctx, struct sockaddr_alg *sa)
+int apm_DIGEST_init(EVP_MD_CTX *ctx, struct sockaddr_alg *sa)
 {
-	struct af_alg_digest_data *ddata = DIGEST_DATA(ctx);
+	struct apm_digest_data *ddata = DIGEST_DATA(ctx);
 
-	if( (ddata->tfmfd = socket(AF_ALG, SOCK_SEQPACKET, 0)) == -1 )
+	if( (ddata->tfmfd = socket(APM, SOCK_SEQPACKET, 0)) == -1 )
 		return 0;
 
 	if( bind(ddata->tfmfd, (struct sockaddr *)sa, sizeof(struct sockaddr_alg)) != 0 )
@@ -34,9 +34,9 @@ int af_alg_DIGEST_init(EVP_MD_CTX *ctx, struct sockaddr_alg *sa)
 	return 1;
 }
 
-int af_alg_DIGEST_update(EVP_MD_CTX *ctx, const void *data, size_t length)
+int apm_DIGEST_update(EVP_MD_CTX *ctx, const void *data, size_t length)
 {
-	struct af_alg_digest_data *ddata = DIGEST_DATA(ctx);
+	struct apm_digest_data *ddata = DIGEST_DATA(ctx);
 	ssize_t r;
 	r = send(ddata->opfd, data, length, MSG_MORE);
 	if( r < 0 || (size_t)r < length )
@@ -44,19 +44,19 @@ int af_alg_DIGEST_update(EVP_MD_CTX *ctx, const void *data, size_t length)
 	return 1;
 }
 
-int af_alg_DIGEST_final(EVP_MD_CTX *ctx, unsigned char *md, int len)
+int apm_DIGEST_final(EVP_MD_CTX *ctx, unsigned char *md, int len)
 {
-	struct af_alg_digest_data *ddata = DIGEST_DATA(ctx);
+	struct apm_digest_data *ddata = DIGEST_DATA(ctx);
 	if( read(ddata->opfd, md, len) != len )
 		return 0;
 
 	return 1;
 }
 
-int af_alg_DIGEST_copy(EVP_MD_CTX *_to,const EVP_MD_CTX *_from)
+int apm_DIGEST_copy(EVP_MD_CTX *_to,const EVP_MD_CTX *_from)
 {
-	struct af_alg_digest_data *from = DIGEST_DATA(_from);
-	struct af_alg_digest_data *to = DIGEST_DATA(_to);
+	struct apm_digest_data *from = DIGEST_DATA(_from);
+	struct apm_digest_data *to = DIGEST_DATA(_to);
 	if( from == NULL || to == NULL )
 		return 1;
 	if( (to->opfd = accept(from->opfd, NULL, 0)) == -1 )
@@ -66,9 +66,9 @@ int af_alg_DIGEST_copy(EVP_MD_CTX *_to,const EVP_MD_CTX *_from)
 	return 1;
 }
 
-int af_alg_DIGEST_cleanup(EVP_MD_CTX *ctx)
+int apm_DIGEST_cleanup(EVP_MD_CTX *ctx)
 {
-	struct af_alg_digest_data *ddata = DIGEST_DATA(ctx);
+	struct apm_digest_data *ddata = DIGEST_DATA(ctx);
 	if( ddata->opfd != -1 )
 		close(ddata->opfd);
 	if( ddata->tfmfd != -1 )
@@ -76,7 +76,7 @@ int af_alg_DIGEST_cleanup(EVP_MD_CTX *ctx)
 	return 0;
 }
 
-int af_alg_list_digests(ENGINE *e __U__, const EVP_MD **digest, const int **nids, int nid)
+int apm_list_digests(ENGINE *e __U__, const EVP_MD **digest, const int **nids, int nid)
 {
 	TRACE("%s\n", __PRETTY_FUNCTION__);
 	if( !digest )
@@ -92,7 +92,7 @@ int af_alg_list_digests(ENGINE *e __U__, const EVP_MD **digest, const int **nids
 	{
 #define CASE(name)\
 case NID_##name:\
-	*digest = &af_alg_##name##_md;\
+	*digest = &apm_##name##_md;\
 	break;
 
 	CASE(md4)

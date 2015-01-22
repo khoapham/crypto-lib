@@ -6,25 +6,25 @@
 #include <openssl/aes.h>
 #include <openssl/engine.h>
 
-#include "e_af_alg.h"
+#include "e_apm.h"
 #include "ciphers.h"
 #include "aes.h"
 #include "des.h"
 
-int af_alg_CIPHER_init_key(EVP_CIPHER_CTX *ctx, const struct sockaddr_alg *sa, const unsigned char *key, const unsigned char *iv __U__, int enc __U__)
+int apm_CIPHER_init_key(EVP_CIPHER_CTX *ctx, const struct sockaddr_alg *sa, const unsigned char *key, const unsigned char *iv __U__, int enc __U__)
 {
 	TRACE("%s %p\n", __PRETTY_FUNCTION__, ctx);
 	int keylen = EVP_CIPHER_CTX_key_length(ctx);
-	struct af_alg_cipher_data *acd = CIPHER_DATA(ctx);
+	struct apm_cipher_data *acd = CIPHER_DATA(ctx);
 
 	acd->op = -1;
 
 	if( ctx->encrypt )
-		acd->type = ALG_OP_ENCRYPT;
+		acd->type = APM_OP_ENCRYPT;
 	else
-		acd->type = ALG_OP_DECRYPT;
+		acd->type = APM_OP_DECRYPT;
 
-	if((acd->tfmfd = socket(AF_ALG, SOCK_SEQPACKET, 0)) == -1)
+	if((acd->tfmfd = socket(APM, SOCK_SEQPACKET, 0)) == -1)
 	{
 		TRACE("socket");
 		return 0;
@@ -36,7 +36,7 @@ int af_alg_CIPHER_init_key(EVP_CIPHER_CTX *ctx, const struct sockaddr_alg *sa, c
 		return 0;
 	}
 
-	if (setsockopt(acd->tfmfd, SOL_ALG, ALG_SET_KEY, key, keylen) == -1)
+	if (setsockopt(acd->tfmfd, SOL_APM, APM_SET_KEY, key, keylen) == -1)
 	{
 		TRACE("setsockopt");
 		return 0;
@@ -45,10 +45,10 @@ int af_alg_CIPHER_init_key(EVP_CIPHER_CTX *ctx, const struct sockaddr_alg *sa, c
 	return 1;
 }
 
-int af_alg_CIPHER_cleanup_key(EVP_CIPHER_CTX *ctx)
+int apm_CIPHER_cleanup_key(EVP_CIPHER_CTX *ctx)
 {
 	TRACE("%s %p\n", __PRETTY_FUNCTION__, ctx);
-	struct af_alg_cipher_data *acd = CIPHER_DATA(ctx);
+	struct apm_cipher_data *acd = CIPHER_DATA(ctx);
 	if( acd->tfmfd != -1 )
 		close(acd->tfmfd);
 	if( acd->op != -1 )
@@ -57,16 +57,16 @@ int af_alg_CIPHER_cleanup_key(EVP_CIPHER_CTX *ctx)
 }
 
 
-int af_alg_CIPHER_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg, const unsigned char *in_arg, size_t nbytes)
+int apm_CIPHER_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg, const unsigned char *in_arg, size_t nbytes)
 {
 	TRACE("%s %p\n", __PRETTY_FUNCTION__, ctx);
-	struct af_alg_cipher_data *acd = CIPHER_DATA(ctx);
+	struct apm_cipher_data *acd = CIPHER_DATA(ctx);
 	int block_size = EVP_CIPHER_CTX_block_size(ctx);
 	struct msghdr msg = {.msg_name = NULL};
 	struct cmsghdr *cmsg;
-	struct af_alg_iv *ivm;
+	struct apm_iv *ivm;
 	struct iovec iov;
-	char buf[CMSG_SPACE(sizeof(acd->type)) + CMSG_SPACE(offsetof(struct af_alg_iv, iv) + block_size)];
+	char buf[CMSG_SPACE(sizeof(acd->type)) + CMSG_SPACE(offsetof(struct apm_iv, iv) + block_size)];
 	ssize_t len;
 	unsigned char save_iv[block_size];
 
@@ -82,8 +82,8 @@ int af_alg_CIPHER_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg, const u
 	}
 	/* set operation type encrypt|decrypt */
 	cmsg = CMSG_FIRSTHDR(&msg);
-	cmsg->cmsg_level = SOL_ALG;
-	cmsg->cmsg_type = ALG_SET_OP;
+	cmsg->cmsg_level = SOL_APM;
+	cmsg->cmsg_type = APM_SET_OP;
 	cmsg->cmsg_len = CMSG_LEN(4);
 	memcpy(CMSG_DATA(cmsg),&acd->type, 4);
 
@@ -92,9 +92,9 @@ int af_alg_CIPHER_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg, const u
 		memcpy(save_iv, in_arg + nbytes - block_size, block_size);
 
 	cmsg = CMSG_NXTHDR(&msg, cmsg);
-	cmsg->cmsg_level = SOL_ALG;
-	cmsg->cmsg_type = ALG_SET_IV;
-	cmsg->cmsg_len = CMSG_LEN(offsetof(struct af_alg_iv, iv) + block_size);
+	cmsg->cmsg_level = SOL_APM;
+	cmsg->cmsg_type = APM_SET_IV;
+	cmsg->cmsg_len = CMSG_LEN(offsetof(struct apm_iv, iv) + block_size);
 	ivm = (void*)CMSG_DATA(cmsg);
 	ivm->ivlen = block_size;
 	memcpy(ivm->iv, ctx->iv, block_size);
@@ -128,7 +128,7 @@ int af_alg_CIPHER_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg, const u
 	return 1;
 }
 
-int af_alg_list_ciphers(ENGINE *e __U__, const EVP_CIPHER **cipher, const int **nids, int nid)
+int apm_list_ciphers(ENGINE *e __U__, const EVP_CIPHER **cipher, const int **nids, int nid)
 {
 	TRACE("%s\n", __PRETTY_FUNCTION__);
 	if( !cipher )
@@ -144,7 +144,7 @@ int af_alg_list_ciphers(ENGINE *e __U__, const EVP_CIPHER **cipher, const int **
 	{
 #define CASE(name)\
 case NID_##name:\
-	*cipher = &af_alg_##name;\
+	*cipher = &apm_##name;\
 	break;
 	CASE(aes_128_cbc);
 	CASE(aes_192_cbc);

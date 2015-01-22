@@ -3,18 +3,18 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-//#ifndef AF_ALG
-//#define AF_ALG 38
-//#endif
+#ifndef APM
+#define APM 39
+#endif
 
-//#ifndef SOL_ALG
-//#define SOL_ALG 279
-//#endif
-//
-///* Socket options */
-//#define ALG_SET_KEY			1
-//#define ALG_SET_IV			2
-//#define ALG_SET_OP			3
+#ifndef SOL_APM
+#define SOL_APM 280
+#endif
+
+/* Socket options */
+#define APM_SET_KEY			1
+#define APM_SET_IV			2
+#define APM_SET_OP			3
 
 /* Operations */
 #define APM_OP_DECRYPT			0
@@ -43,6 +43,11 @@ extern struct NID_store ciphers_used;
 
 extern struct NID_store digests_available;
 extern struct NID_store digests_used;
+
+struct apm_iv {
+        __u32   ivlen;
+        __u8    iv[0];
+};
 
 #ifdef DEBUG
 #define TRACE(...) fprintf(stderr,__VA_ARGS__)

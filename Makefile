@@ -1,7 +1,4 @@
 #!/usr/bin/make -f <
-#
-# (c) 2013 - Bertrand Jacquin <beber@meleeweb.net>
-#
 
 NAME	= libapm
 #VERSION	= $(shell sh -c 'git describe --tags --dirty=-dev 2> /dev/null || echo 0')
