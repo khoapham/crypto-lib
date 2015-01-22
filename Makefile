@@ -13,7 +13,8 @@ EXTRA_FILES	= \
 
 CFLAGS	= \
 	-O3 \
-	-W -Wall -Werror
+	-W
+#	-W -Wall -Werror
 
 SPEC_CFLAGS	= \
 	-fPIC
