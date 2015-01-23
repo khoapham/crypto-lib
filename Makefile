@@ -72,11 +72,6 @@ CFLAGS	+= -DCRYPTOUIO -DCHAINING_MODE
 
 %.o:    %.c
 	$(call qcmd,CC,$@)
-#	$(Q)$(CC) -C cryptouio -I. -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
-#	$(Q)$(CC) -C rfc4634 -I. -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
-#	$(Q)$(CC) -C fips197 -I. -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
-#	$(Q)$(CC) $(INCLUDE) -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
-#	$(Q)$(CC) -C cryptouio $(INCLUDE) -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
 	$(Q)$(CC) -C $(SRC_DIR) -I. -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
 
 $(NAME).so:	$(SRC:c=o)
