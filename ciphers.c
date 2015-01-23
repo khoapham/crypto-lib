@@ -37,6 +37,12 @@ static struct {
                 { 0,                            NID_undef,              0,       0, },
 };
 
+void submit_completed(void *ctx, int status)
+{
+        printf("***************** SUBMIT COMPLETED with %d\n",status);
+        /* Do nothing */
+}
+
 int apm_CIPHER_init_key(EVP_CIPHER_CTX *ctx, const struct sockaddr_alg *sa, const unsigned char *key, const unsigned char *iv __U__, int enc __U__)
 {
 	TRACE("%s %p\n", __PRETTY_FUNCTION__, ctx);
@@ -199,7 +205,8 @@ int apm_CIPHER_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg, const unsi
                         printf("Operation failed error %d\n", rc);
                         return -1;
                 }
-                usleep(1000000);	//???
+		while (xgene_sec_queue_process(uioctx, 1, NULL) == 0) {;}
+//                usleep(1000000);	//???
                 memcpy(out_arg, data_buf, nbytes);
                 xgene_sec_dump("DATA BUFFER OUT: ",data_buf, nbytes);
                 xgene_sec_dump("OUT : ", out_arg, nbytes);
@@ -215,12 +222,11 @@ int apm_CIPHER_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg, const unsi
                         printf("Operation failed error %d\n", rc);
                         return -1;
                 }
-                usleep(10000);		//???
+		while (xgene_sec_queue_process(uioctx, 1, NULL) == 0) {;}
+//                usleep(10000);		//???
                 memcpy(out_arg, data_buf, nbytes);
                 xgene_sec_dump("DATA BUFFER OUT: ",data_buf, nbytes);
                 xgene_sec_dump("OUT : ", out_arg, nbytes);
-
-
         }
 
         xgene_sec_queue2hw_flush(uioctx, command);
@@ -234,6 +240,19 @@ int apm_CIPHER_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg, const unsi
 
 	return 1;
 }
+
+//const EVP_CIPHER apm_aes_256_cbc = {
+//                NID_aes_256_cbc,
+//                16, 32, 16,
+//                EVP_CIPH_CBC_MODE,
+//                apm_CIPHER_init_key, //apm_init_key,
+//                apm_CIPHER_do_cipher, //apm_cipher,
+//                apm_CIPHER_cleanup_key, //apm_cleanup,
+//                sizeof (struct xgene_sec_session_ctx),
+//                EVP_CIPHER_set_asn1_iv,
+//                EVP_CIPHER_get_asn1_iv,
+//                NULL
+//};
 
 int apm_list_ciphers(ENGINE *e __U__, const EVP_CIPHER **cipher, const int **nids, int nid)
 {
