@@ -35,6 +35,25 @@ RM	= rm -f
 TAR	= tar
 XZ	= xz
 
+#SRCS_C	= e_apm.c ciphers.c digests.c
+
+SRC	+=./cryptouio/xgene_sec_port.c \
+          ./cryptouio/xgene_sec_sa.c \
+          ./cryptouio/xgene_sec_tkn.c \
+          ./cryptouio/xgene_sec_qm.c \
+          ./cryptouio/xgene_sec_uio.c \
+          ./cryptouio/xgene_sec_alg.c \
+          ./rfc4634/sha1.c \
+          ./rfc4634/sha224-256.c \
+          ./rfc4634/sha384-512.c \
+          ./rfc4634/usha.c \
+          ./rfc4634/md5.c \
+          ./fips197/aes.c 
+
+SRC_DIR	= cryptouio fips197 rfc4634
+ 
+#INCLUDE	= -I.  -Iopenssl -Ifips -Irfc4634
+
 ifeq ($(V),)
  Q	= @
 
@@ -47,9 +66,18 @@ shared:	$(NAME).so
 strip:	$(NAME).so.strip
 dist:	$(NAME)-$(VERSION).txz
 
+#OBJS=$(SRCS_C:.c=.o)
+
+CFLAGS	+= -DCRYPTOUIO -DCHAINING_MODE
+
 %.o:    %.c
 	$(call qcmd,CC,$@)
-	$(Q)$(CC) -I. -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
+#	$(Q)$(CC) -C cryptouio -I. -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
+#	$(Q)$(CC) -C rfc4634 -I. -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
+#	$(Q)$(CC) -C fips197 -I. -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
+#	$(Q)$(CC) $(INCLUDE) -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
+#	$(Q)$(CC) -C cryptouio $(INCLUDE) -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
+	$(Q)$(CC) -C $(SRC_DIR) -I. -c $(SPEC_CFLAGS) $(CFLAGS) -o $@ $<
 
 $(NAME).so:	$(SRC:c=o)
 	$(call qcmd,LD,$@)
