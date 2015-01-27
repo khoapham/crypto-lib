@@ -78,6 +78,8 @@ int apm_CIPHER_init_key(EVP_CIPHER_CTX *ctx, const struct sockaddr_alg *sa, cons
         int rc;
         int i=0;
 
+	printf("lib APM initializing key\n");
+
         uioctx = (struct xgene_sec_uio_ctx*)malloc(sizeof(struct xgene_sec_uio_ctx));
 
         uioctx->uioinfo.uio_num = uio_dev_id;
@@ -190,6 +192,7 @@ int apm_CIPHER_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg, const unsi
         int rc;
         int command = 0;
 
+	printf("lib APM doing ciphers\n");
         if (ctx->encrypt) {
                 printf("INL: %d\n",nbytes);
                 xgene_sec_dump("DATA BUFFER IN: ",in_arg, nbytes);

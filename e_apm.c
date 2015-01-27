@@ -125,10 +125,11 @@ struct NID_store ciphers_used =
 int apm_init(ENGINE * engine __U__)
 {
 	TRACE("%s\n", __PRETTY_FUNCTION__);
-	int sock;
-	if((sock = socket(APM, SOCK_SEQPACKET, 0)) == -1)
-		return 0;
-	close(sock);
+	printf("Initializing the APM lib\n");
+//	int sock;
+//	if((sock = socket(APM, SOCK_SEQPACKET, 0)) == -1)
+//		return 0;
+//	close(sock);
 	return 1;
 }
 
