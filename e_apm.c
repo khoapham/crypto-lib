@@ -151,6 +151,7 @@ static int apm_ctrl(ENGINE *e, int cmd, long i __U__, void *p, void (*f)() __U__
 {
 	TRACE("%s\n", __PRETTY_FUNCTION__);
 	OpenSSL_add_all_algorithms();
+	printf("in apm_ctrl function\n");
 	switch( cmd )
 	{
 	case APM_CMD_CIPHERS:
