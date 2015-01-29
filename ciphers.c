@@ -76,7 +76,7 @@ int apm_CIPHER_init_key(EVP_CIPHER_CTX *ctx, const struct sockaddr_alg *sa, cons
 
         int uio_dev_id = 0;
         int rc;
-        int i=0;
+//        int i=0;
 
 	printf("lib APM initializing key\n");
 
@@ -115,7 +115,16 @@ int apm_CIPHER_cleanup_key(EVP_CIPHER_CTX *ctx)
 //		close(acd->tfmfd);
 //	if( acd->op != -1 )
 //		close(acd->op);
-        xgene_sec_session_deinit(uioctx, sess);
+	if (sess) {
+		printf("lib APM deinit xgene session\n");
+	        xgene_sec_session_deinit(uioctx, sess);
+		free(sess);
+	}
+	if (uioctx) {
+		printf("lib APM deinit xgene uio context\n");
+		xgene_sec_uio_deinit(uioctx);
+		free(uioctx);
+	}
 	return 1;
 }
 
@@ -188,7 +197,7 @@ int apm_CIPHER_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg, const unsi
 //		memcpy(ctx->iv, out_arg + done - block_size, block_size);
 //	else
 //		memcpy(ctx->iv, save_iv, block_size);
-        int i=0;
+//        int i=0;
         int rc;
         int command = 0;
 
@@ -234,12 +243,12 @@ int apm_CIPHER_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg, const unsi
 
         xgene_sec_queue2hw_flush(uioctx, command);
 
-        while (i<10) {
+//        while (i<10) {
+//
+//                i++;
+//        }
 
-                i++;
-        }
-
-//        xgene_sec_queue_process(uioctx, max_outstanding_ops, submit_completed /*NULL*/);
+        xgene_sec_queue_process(uioctx, max_outstanding_ops, submit_completed /*NULL*/);
 
 	return 1;
 }
